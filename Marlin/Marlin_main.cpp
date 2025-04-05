@@ -7695,7 +7695,7 @@ inline void gcode_M17() {
     }
   }
 
-#endif // SDSUPPORT
+#endif
 
 /**
  * M31: Get the time since the start of SD Print (or last M109)
