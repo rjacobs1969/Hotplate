@@ -22,179 +22,14 @@
 
 #ifndef ULTRALCD_IMPL_HD44780_H
 #define ULTRALCD_IMPL_HD44780_H
-
-/**
- * Implementation of the LCD display routines for a Hitachi HD44780 display.
- * These are the most common LCD character displays.
- */
-
 #include "utility.h"
 #include "duration_t.h"
-
-#if ENABLED(AUTO_BED_LEVELING_UBL)
-  #include "ubl.h"
-
-  #if ENABLED(ULTIPANEL)
-    #define ULTRA_X_PIXELS_PER_CHAR    5
-    #define ULTRA_Y_PIXELS_PER_CHAR    8
-    #define ULTRA_COLUMNS_FOR_MESH_MAP 7
-    #define ULTRA_ROWS_FOR_MESH_MAP    4
-
-    #define N_USER_CHARS    8
-
-    #define TOP_LEFT      _BV(0)
-    #define TOP_RIGHT     _BV(1)
-    #define LOWER_LEFT    _BV(2)
-    #define LOWER_RIGHT   _BV(3)
-  #endif
-#endif
+#include <LiquidCrystal.h>
+#define LCD_CLASS LiquidCrystal
 
 extern volatile uint8_t buttons;  //an extended version of the last checked buttons in a bit array.
 
-////////////////////////////////////
-// Setup button and encode mappings for each panel (into 'buttons' variable
-//
-// This is just to map common functions (across different panels) onto the same
-// macro name. The mapping is independent of whether the button is directly connected or
-// via a shift/i2c register.
-
-#if ENABLED(ULTIPANEL)
-
-  //
-  // Setup other button mappings of each panel
-  //
-  #if ENABLED(LCD_I2C_VIKI)
-    #define B_I2C_BTN_OFFSET 3 // (the first three bit positions reserved for EN_A, EN_B, EN_C)
-
-    // button and encoder bit positions within 'buttons'
-    #define B_LE (BUTTON_LEFT   << B_I2C_BTN_OFFSET)    // The remaining normalized buttons are all read via I2C
-    #define B_UP (BUTTON_UP     << B_I2C_BTN_OFFSET)
-    #define B_MI (BUTTON_SELECT << B_I2C_BTN_OFFSET)
-    #define B_DW (BUTTON_DOWN   << B_I2C_BTN_OFFSET)
-    #define B_RI (BUTTON_RIGHT  << B_I2C_BTN_OFFSET)
-
-    #undef LCD_CLICKED
-    #if BUTTON_EXISTS(ENC)
-      // the pause/stop/restart button is connected to BTN_ENC when used
-      #define B_ST (EN_C)                            // Map the pause/stop/resume button into its normalized functional name
-      #define LCD_CLICKED (buttons & (B_MI|B_RI|B_ST)) // pause/stop button also acts as click until we implement proper pause/stop.
-    #else
-      #define LCD_CLICKED (buttons & (B_MI|B_RI))
-    #endif
-
-    // I2C buttons take too long to read inside an interrupt context and so we read them during lcd_update
-    #define LCD_HAS_SLOW_BUTTONS
-
-  #elif ENABLED(LCD_I2C_PANELOLU2)
-
-    #if !BUTTON_EXISTS(ENC) // Use I2C if not directly connected to a pin
-
-      #define B_I2C_BTN_OFFSET 3 // (the first three bit positions reserved for EN_A, EN_B, EN_C)
-
-      #define B_MI (PANELOLU2_ENCODER_C << B_I2C_BTN_OFFSET) // requires LiquidTWI2 library v1.2.3 or later
-
-      #undef LCD_CLICKED
-      #define LCD_CLICKED (buttons & B_MI)
-
-      // I2C buttons take too long to read inside an interrupt context and so we read them during lcd_update
-      #define LCD_HAS_SLOW_BUTTONS
-
-    #endif
-
-  #elif DISABLED(NEWPANEL) // old style ULTIPANEL
-    // Shift register bits correspond to buttons:
-    #define BL_LE 7   // Left
-    #define BL_UP 6   // Up
-    #define BL_MI 5   // Middle
-    #define BL_DW 4   // Down
-    #define BL_RI 3   // Right
-    #define BL_ST 2   // Red Button
-    #define B_LE (_BV(BL_LE))
-    #define B_UP (_BV(BL_UP))
-    #define B_MI (_BV(BL_MI))
-    #define B_DW (_BV(BL_DW))
-    #define B_RI (_BV(BL_RI))
-    #define B_ST (_BV(BL_ST))
-    #define LCD_CLICKED (buttons & (B_MI|B_ST))
-  #endif
-
-#endif // ULTIPANEL
-
-////////////////////////////////////
-// Create LCD class instance and chipset-specific information
-#if ENABLED(LCD_I2C_TYPE_PCF8575)
-  // note: these are register mapped pins on the PCF8575 controller not Arduino pins
-  #define LCD_I2C_PIN_BL  3
-  #define LCD_I2C_PIN_EN  2
-  #define LCD_I2C_PIN_RW  1
-  #define LCD_I2C_PIN_RS  0
-  #define LCD_I2C_PIN_D4  4
-  #define LCD_I2C_PIN_D5  5
-  #define LCD_I2C_PIN_D6  6
-  #define LCD_I2C_PIN_D7  7
-
-  #include <Wire.h>
-  #include <LCD.h>
-  #include <LiquidCrystal_I2C.h>
-  #define LCD_CLASS LiquidCrystal_I2C
-  LCD_CLASS lcd(LCD_I2C_ADDRESS, LCD_I2C_PIN_EN, LCD_I2C_PIN_RW, LCD_I2C_PIN_RS, LCD_I2C_PIN_D4, LCD_I2C_PIN_D5, LCD_I2C_PIN_D6, LCD_I2C_PIN_D7);
-
-#elif ENABLED(LCD_I2C_TYPE_MCP23017)
-  //for the LED indicators (which maybe mapped to different things in lcd_implementation_update_indicators())
-  #define LED_A 0x04 //100
-  #define LED_B 0x02 //010
-  #define LED_C 0x01 //001
-
-  #define LCD_HAS_STATUS_INDICATORS
-
-  #include <Wire.h>
-  #include <LiquidTWI2.h>
-  #define LCD_CLASS LiquidTWI2
-  #if ENABLED(DETECT_DEVICE)
-    LCD_CLASS lcd(LCD_I2C_ADDRESS, 1);
-  #else
-    LCD_CLASS lcd(LCD_I2C_ADDRESS);
-  #endif
-
-#elif ENABLED(LCD_I2C_TYPE_MCP23008)
-  #include <Wire.h>
-  #include <LiquidTWI2.h>
-  #define LCD_CLASS LiquidTWI2
-  #if ENABLED(DETECT_DEVICE)
-    LCD_CLASS lcd(LCD_I2C_ADDRESS, 1);
-  #else
-    LCD_CLASS lcd(LCD_I2C_ADDRESS);
-  #endif
-
-#elif ENABLED(LCD_I2C_TYPE_PCA8574)
-  #include <LiquidCrystal_I2C.h>
-  #define LCD_CLASS LiquidCrystal_I2C
-  LCD_CLASS lcd(LCD_I2C_ADDRESS, LCD_WIDTH, LCD_HEIGHT);
-
-// 2 wire Non-latching LCD SR from:
-// https://bitbucket.org/fmalpartida/new-liquidcrystal/wiki/schematics#!shiftregister-connection
-#elif ENABLED(SR_LCD_2W_NL)
-  extern "C" void __cxa_pure_virtual() { while (1); }
-  #include <LCD.h>
-  #include <LiquidCrystal_SR.h>
-  #define LCD_CLASS LiquidCrystal_SR
-  #if PIN_EXISTS(SR_STROBE)
-    LCD_CLASS lcd(SR_DATA_PIN, SR_CLK_PIN, SR_STROBE_PIN);
-  #else
-    LCD_CLASS lcd(SR_DATA_PIN, SR_CLK_PIN);
-  #endif
-#elif ENABLED(LCM1602)
-  #include <Wire.h>
-  #include <LCD.h>
-  #include <LiquidCrystal_I2C.h>
-  #define LCD_CLASS LiquidCrystal_I2C
-  LCD_CLASS lcd(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
-#else
-  // Standard directly connected LCD implementations
-  #include <LiquidCrystal.h>
-  #define LCD_CLASS LiquidCrystal
-  LCD_CLASS lcd(LCD_PINS_RS, LCD_PINS_ENABLE, LCD_PINS_D4, LCD_PINS_D5, LCD_PINS_D6, LCD_PINS_D7); //RS,Enable,D4,D5,D6,D7
-#endif
+LCD_CLASS lcd(LCD_PINS_RS, LCD_PINS_ENABLE, LCD_PINS_D4, LCD_PINS_D5, LCD_PINS_D6, LCD_PINS_D7); //RS,Enable,D4,D5,D6,D7
 
 #include "utf_mapper.h"
 
@@ -662,25 +497,7 @@ FORCE_INLINE void _draw_heater_status(const int8_t heater, const char prefix, co
 
   lcd.print(itostr3(t1 + 0.5));
   lcd.write('/');
-
-  #if !HEATER_IDLE_HANDLER
-    UNUSED(blink);
-  #else
-    const bool is_idle = (
-      #if HAS_HEATED_BED
-        isBed ? thermalManager.is_bed_idle() :
-      #endif
-      thermalManager.is_heater_idle(heater)
-    );
-
-    if (!blink && is_idle) {
-      lcd.write(' ');
-      if (t2 >= 10) lcd.write(' ');
-      if (t2 >= 100) lcd.write(' ');
-    }
-    else
-  #endif
-      lcd.print(itostr3left(t2 + 0.5));
+  lcd.print(itostr3left(t2 + 0.5));
 
   if (prefix >= 0) {
     lcd.print((char)LCD_DEGREE_CHAR);
@@ -735,266 +552,43 @@ Possible status screens:
 */
 static void lcd_implementation_status_screen() {
   const bool blink = lcd_blink();
-
-  //
-  // Line 1
-  //
-
   lcd.setCursor(0, 0);
-
-  #if LCD_WIDTH < 20
-
-    //
-    // Hotend 0 Temperature
-    //
-    _draw_heater_status(0, -1, blink);
-
-    //
-    // Hotend 1 or Bed Temperature
-    //
-    #if HOTENDS > 1 || HAS_HEATED_BED
-
-      lcd.setCursor(8, 0);
-      #if HOTENDS > 1
-        lcd.print((char)LCD_STR_THERMOMETER[0]);
-        _draw_heater_status(1, -1, blink);
-      #else
-        lcd.print((char)LCD_BEDTEMP_CHAR);
-        _draw_heater_status(-1, -1, blink);
-      #endif
-
-    #endif // HOTENDS > 1 || HAS_HEATED_BED
-
-  #else // LCD_WIDTH >= 20
-
-    //
-    // Hotend 0 Temperature
-    //
-    _draw_heater_status(0, LCD_STR_THERMOMETER[0], blink);
-
-    //
-    // Hotend 1 or Bed Temperature
-    //
-    #if HOTENDS > 1 || HAS_HEATED_BED
-      lcd.setCursor(10, 0);
-      #if HOTENDS > 1
-        _draw_heater_status(1, LCD_STR_THERMOMETER[0], blink);
-      #else
-        _draw_heater_status(-1, (
-          #if HAS_LEVELING
-            planner.leveling_active && blink ? '_' :
-          #endif
-          LCD_BEDTEMP_CHAR
-        ), blink);
-      #endif
-
-    #endif // HOTENDS > 1 || HAS_HEATED_BED
-
-  #endif // LCD_WIDTH >= 20
-
-  //
-  // Line 2
-  //
-
-  #if LCD_HEIGHT > 2
-
-    #if LCD_WIDTH < 20
-
-      #if ENABLED(SDSUPPORT)
-        lcd.setCursor(0, 2);
-        lcd_printPGM(PSTR("SD"));
-        if (IS_SD_PRINTING())
-          lcd.print(itostr3(card.percentDone()));
-        else
-          lcd_printPGM(PSTR("---"));
-          lcd.write('%');
-      #endif // SDSUPPORT
-
-    #else // LCD_WIDTH >= 20
-
-      lcd.setCursor(0, 1);
-
-      // If the first line has two extruder temps,
-      // show more temperatures on the next line
-
-      #if HOTENDS > 2 || (HOTENDS > 1 && HAS_HEATED_BED)
-
-        #if HOTENDS > 2
-          _draw_heater_status(2, LCD_STR_THERMOMETER[0], blink);
-          lcd.setCursor(10, 1);
-        #endif
-
-        _draw_heater_status(-1, (
-          #if HAS_LEVELING
-            planner.leveling_active && blink ? '_' :
-          #endif
-          LCD_BEDTEMP_CHAR
-        ), blink);
-
-      #else // HOTENDS <= 2 && (HOTENDS <= 1 || !HAS_HEATED_BED)
-
-        _draw_axis_value(X_AXIS, ftostr4sign(LOGICAL_X_POSITION(current_position[X_AXIS])), blink);
-
-        lcd.write(' ');
-
-        _draw_axis_value(Y_AXIS, ftostr4sign(LOGICAL_Y_POSITION(current_position[Y_AXIS])), blink);
-
-      #endif // HOTENDS <= 2 && (HOTENDS <= 1 || !HAS_HEATED_BED)
-
-    #endif // LCD_WIDTH >= 20
-
-    lcd.setCursor(LCD_WIDTH - 8, 1);
-    _draw_axis_value(Z_AXIS, ftostr52sp(LOGICAL_Z_POSITION(current_position[Z_AXIS])), blink);
-
-    #if HAS_LEVELING && !HAS_HEATED_BED
-      lcd.write(planner.leveling_active || blink ? '_' : ' ');
-    #endif
-
-  #endif // LCD_HEIGHT > 2
-
-  //
-  // Line 3
-  //
-
-  #if LCD_HEIGHT > 3
-
-    lcd.setCursor(0, 2);
-    lcd.print((char)LCD_FEEDRATE_CHAR);
-    lcd.print(itostr3(feedrate_percentage));
+  _draw_heater_status(0, LCD_STR_THERMOMETER[0], blink);
+  lcd.setCursor(0, 2);
+  if (IS_SD_PRINTING()) {
+    lcd_printPGM(PSTR("Status: "));
+    lcd.print(itostr3(card.percentDone()));
     lcd.write('%');
 
-    #if LCD_WIDTH >= 20 && ENABLED(SDSUPPORT)
+  } else
+    lcd_printPGM(PSTR("IDLE                "));
+  UNUSED(blink);
+  lcd.setCursor(0, 1);
 
-      lcd.setCursor(7, 2);
-      lcd_printPGM(PSTR("SD"));
-      if (IS_SD_PRINTING())
-        lcd.print(itostr3(card.percentDone()));
-      else
-        lcd_printPGM(PSTR("---"));
-      lcd.write('%');
+  // Get the UTF8 character count of the string
+  uint8_t slen = utf8_strlen(lcd_status_message);
 
-    #endif // LCD_WIDTH >= 20 && SDSUPPORT
+  // Just print the string to the LCD
+  lcd_print_utf(lcd_status_message, LCD_WIDTH);
 
-    char buffer[10];
-    duration_t elapsed = print_job_timer.duration();
-    uint8_t len = elapsed.toDigital(buffer);
-
-    lcd.setCursor(LCD_WIDTH - len - 1, 2);
-    lcd.print((char)LCD_CLOCK_CHAR);
-    lcd_print(buffer);
-
-  #endif // LCD_HEIGHT > 3
-
-  //
-  // Last Line
-  // Status Message (which may be a Progress Bar or Filament display)
-  //
-
-  lcd.setCursor(0, LCD_HEIGHT - 1);
-
-  #if ENABLED(LCD_PROGRESS_BAR)
-
-    // Draw the progress bar if the message has shown long enough
-    // or if there is no message set.
-    #if DISABLED(LCD_SET_PROGRESS_MANUALLY)
-      const uint8_t progress_bar_percent = card.percentDone();
-    #endif
-    if (progress_bar_percent > 2 && (ELAPSED(millis(), progress_bar_ms + PROGRESS_BAR_MSG_TIME) || !lcd_status_message[0]))
-      return lcd_draw_progress_bar(progress_bar_percent);
-
-  #elif ENABLED(FILAMENT_LCD_DISPLAY) && ENABLED(SDSUPPORT)
-
-    // Show Filament Diameter and Volumetric Multiplier %
-    // After allowing lcd_status_message to show for 5 seconds
-    if (ELAPSED(millis(), previous_lcd_status_ms + 5000UL)) {
-      lcd_printPGM(PSTR("Dia "));
-      lcd.print(ftostr12ns(filament_width_meas));
-      lcd_printPGM(PSTR(" V"));
-      lcd.print(itostr3(100.0 * (
-          parser.volumetric_enabled
-            ? planner.volumetric_area_nominal / planner.volumetric_multiplier[FILAMENT_SENSOR_EXTRUDER_NUM]
-            : planner.volumetric_multiplier[FILAMENT_SENSOR_EXTRUDER_NUM]
-        )
-      ));
-      lcd.write('%');
-      return;
-    }
-
-  #endif // FILAMENT_LCD_DISPLAY && SDSUPPORT
-
-  #if ENABLED(STATUS_MESSAGE_SCROLLING)
-    static bool last_blink = false;
-
-    // Get the UTF8 character count of the string
-    uint8_t slen = utf8_strlen(lcd_status_message);
-
-    // If the string fits into the LCD, just print it and do not scroll it
-    if (slen <= LCD_WIDTH) {
-
-      // The string isn't scrolling and may not fill the screen
-      lcd_print_utf(lcd_status_message);
-
-      // Fill the rest with spaces
-      while (slen < LCD_WIDTH) {
-        lcd.write(' ');
-        ++slen;
-      }
-    }
-    else {
-      // String is larger than the available space in screen.
-
-      // Get a pointer to the next valid UTF8 character
-      const char *stat = lcd_status_message + status_scroll_offset;
-
-      // Get the string remaining length
-      const uint8_t rlen = utf8_strlen(stat);
-
-      // If we have enough characters to display
-      if (rlen >= LCD_WIDTH) {
-        // The remaining string fills the screen - Print it
-        lcd_print_utf(stat, LCD_WIDTH);
-      }
-      else {
-
-        // The remaining string does not completely fill the screen
-        lcd_print_utf(stat, LCD_WIDTH);               // The string leaves space
-        uint8_t chars = LCD_WIDTH - rlen;             // Amount of space left in characters
-
-        lcd.write('.');                               // Always at 1+ spaces left, draw a dot
-        if (--chars) {                                // Draw a second dot if there's space
-          lcd.write('.');
-          if (--chars)
-            lcd_print_utf(lcd_status_message, chars); // Print a second copy of the message
-        }
-      }
-      if (last_blink != blink) {
-        last_blink = blink;
-
-        // Adjust by complete UTF8 characters
-        if (status_scroll_offset < slen) {
-          status_scroll_offset++;
-          while (!START_OF_UTF8_CHAR(lcd_status_message[status_scroll_offset]))
-            status_scroll_offset++;
-        }
-        else
-          status_scroll_offset = 0;
-      }
-    }
-  #else
-    UNUSED(blink);
-
-    // Get the UTF8 character count of the string
-    uint8_t slen = utf8_strlen(lcd_status_message);
-
-    // Just print the string to the LCD
-    lcd_print_utf(lcd_status_message, LCD_WIDTH);
-
-    // Fill the rest with spaces if there are missing spaces
+  // Fill the rest with spaces if there are missing spaces
     while (slen < LCD_WIDTH) {
       lcd.write(' ');
       ++slen;
     }
-  #endif
+
+    lcd.setCursor(0, LCD_HEIGHT -  1);
+    if (progress_bar_percent > 0) {
+
+      return lcd_draw_progress_bar(progress_bar_percent);
+    } else {
+      slen = 0;
+      while (slen < LCD_WIDTH) {
+        lcd.write(' ');
+        ++slen;
+
+      }
+    }
 }
 
 #if ENABLED(ULTIPANEL)

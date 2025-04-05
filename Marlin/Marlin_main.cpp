@@ -7703,7 +7703,8 @@ inline void gcode_M17() {
 inline void gcode_M31() {
   char buffer[21];
   duration_t elapsed = print_job_timer.duration();
-  elapsed.toString(buffer);
+
+  .toString(buffer);
   lcd_setstatus(buffer);
 
   SERIAL_ECHO_START();
@@ -8572,10 +8573,10 @@ inline void gcode_M105() {
  */
 
 #ifndef MIN_COOLING_SLOPE_DEG
-  #define MIN_COOLING_SLOPE_DEG 1.50
+  #define MIN_COOLING_SLOPE_DEG 1
 #endif
 #ifndef MIN_COOLING_SLOPE_TIME
-  #define MIN_COOLING_SLOPE_TIME 60
+  #define MIN_COOLING_SLOPE_TIME 30
 #endif
 
 inline void gcode_M109() {
@@ -8610,16 +8611,6 @@ inline void gcode_M109() {
       }
       else
         print_job_timer.start();
-    #endif
-
-    #if ENABLED(ULTRA_LCD)
-      const bool heating = thermalManager.isHeatingHotend(target_extruder);
-      if (heating || !no_wait_for_cooling)
-        #if HOTENDS > 1
-          lcd_status_printf_P(0, heating ? PSTR("E%i " MSG_HEATING) : PSTR("E%i " MSG_COOLING), target_extruder + 1);
-        #else
-          lcd_setstatusPGM(heating ? PSTR("E " MSG_HEATING) : PSTR("E " MSG_COOLING));
-        #endif
     #endif
   }
 
@@ -8717,7 +8708,7 @@ inline void gcode_M109() {
       // break after MIN_COOLING_SLOPE_TIME seconds
       // if the temperature did not drop at least MIN_COOLING_SLOPE_DEG
       if (!next_cool_check_ms || ELAPSED(now, next_cool_check_ms)) {
-        if (old_temp - temp < float(MIN_COOLING_SLOPE_DEG)) break;
+        if (old_temp - temp < float(MIN_COOLING_SLOPE_DEG) || temp < 40) break;
         next_cool_check_ms = now + 1000UL * MIN_COOLING_SLOPE_TIME;
         old_temp = temp;
       }

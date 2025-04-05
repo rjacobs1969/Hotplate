@@ -113,7 +113,7 @@
   #define MSG_SET_ORIGIN                      _UxGT("Set origin")
 #endif
 #ifndef MSG_PREHEAT_1
-  #define MSG_PREHEAT_1                       _UxGT("Preheat PLA")
+  #define MSG_PREHEAT_1                       _UxGT("Sn63Pb37")
 #endif
 #ifndef MSG_PREHEAT_1_N
   #define MSG_PREHEAT_1_N                     MSG_PREHEAT_1 _UxGT(" ")
@@ -131,7 +131,7 @@
   #define MSG_PREHEAT_1_SETTINGS              MSG_PREHEAT_1 _UxGT(" conf")
 #endif
 #ifndef MSG_PREHEAT_2
-  #define MSG_PREHEAT_2                       _UxGT("Preheat ABS")
+  #define MSG_PREHEAT_2                       _UxGT("Sn3.9AgCu0.2")
 #endif
 #ifndef MSG_PREHEAT_2_N
   #define MSG_PREHEAT_2_N                     MSG_PREHEAT_2 _UxGT(" ")
@@ -460,7 +460,7 @@
   #define MSG_BED_Z                           _UxGT("Bed Z")
 #endif
 #ifndef MSG_NOZZLE
-  #define MSG_NOZZLE                          _UxGT("Nozzle")
+  #define MSG_NOZZLE                          _UxGT("Hotplate")
 #endif
 #ifndef MSG_BED
   #define MSG_BED                             _UxGT("Bed")
@@ -610,7 +610,7 @@
   #define MSG_E5STEPS                         _UxGT("E5steps/mm")
 #endif
 #ifndef MSG_TEMPERATURE
-  #define MSG_TEMPERATURE                     _UxGT("Temperature")
+  #define MSG_TEMPERATURE                     _UxGT("Manual control")
 #endif
 #ifndef MSG_MOTION
   #define MSG_MOTION                          _UxGT("Motion")
@@ -661,19 +661,19 @@
   #define MSG_TUNE                            _UxGT("Tune")
 #endif
 #ifndef MSG_PAUSE_PRINT
-  #define MSG_PAUSE_PRINT                     _UxGT("Pause print")
+  #define MSG_PAUSE_PRINT                     _UxGT("Pause job")
 #endif
 #ifndef MSG_RESUME_PRINT
-  #define MSG_RESUME_PRINT                    _UxGT("Resume print")
+  #define MSG_RESUME_PRINT                    _UxGT("Resume job")
 #endif
 #ifndef MSG_STOP_PRINT
-  #define MSG_STOP_PRINT                      _UxGT("Stop print")
+  #define MSG_STOP_PRINT                      _UxGT("Stop jobs")
 #endif
 #ifndef MSG_POWER_LOSS_RECOVERY
   #define MSG_POWER_LOSS_RECOVERY             _UxGT("Power-Loss Recovery")
 #endif
 #ifndef MSG_CARD_MENU
-  #define MSG_CARD_MENU                       _UxGT("Print from SD")
+  #define MSG_CARD_MENU                       _UxGT("Run temp.profile")
 #endif
 #ifndef MSG_NO_CARD
   #define MSG_NO_CARD                         _UxGT("No SD card")
@@ -685,13 +685,13 @@
   #define MSG_USERWAIT                        _UxGT("Click to resume...")
 #endif
 #ifndef MSG_PRINT_PAUSED
-  #define MSG_PRINT_PAUSED                    _UxGT("Print paused")
+  #define MSG_PRINT_PAUSED                    _UxGT("Job paused")
 #endif
 #ifndef MSG_PRINTING
-  #define MSG_PRINTING                        _UxGT("Printing...")
+  #define MSG_PRINTING                        _UxGT("Executing...")
 #endif
 #ifndef MSG_PRINT_ABORTED
-  #define MSG_PRINT_ABORTED                   _UxGT("Print aborted")
+  #define MSG_PRINT_ABORTED                   _UxGT("Job aborted")
 #endif
 #ifndef MSG_NO_MOVE
   #define MSG_NO_MOVE                         _UxGT("No move.")
@@ -844,7 +844,7 @@
   #define MSG_ERR_Z_HOMING                    MSG_HOME _UxGT(" ") MSG_X MSG_Y _UxGT(" ") MSG_FIRST
 #endif
 #ifndef MSG_HALTED
-  #define MSG_HALTED                          _UxGT("PRINTER HALTED")
+  #define MSG_HALTED                          _UxGT("HOTPLATE HALTED")
 #endif
 #ifndef MSG_PLEASE_RESET
   #define MSG_PLEASE_RESET                    _UxGT("Please reset")
@@ -907,10 +907,10 @@
   #define MSG_DELTA_RADIUS                    _UxGT("Radius")
 #endif
 #ifndef MSG_INFO_MENU
-  #define MSG_INFO_MENU                       _UxGT("About Printer")
+  #define MSG_INFO_MENU                       _UxGT("About Hotplate")
 #endif
 #ifndef MSG_INFO_PRINTER_MENU
-  #define MSG_INFO_PRINTER_MENU               _UxGT("Printer Info")
+  #define MSG_INFO_PRINTER_MENU               _UxGT("Hotplate Info")
 #endif
 #ifndef MSG_3POINT_LEVELING
   #define MSG_3POINT_LEVELING                 _UxGT("3-Point Leveling")
@@ -928,7 +928,7 @@
   #define MSG_MESH_LEVELING                   _UxGT("Mesh Leveling")
 #endif
 #ifndef MSG_INFO_STATS_MENU
-  #define MSG_INFO_STATS_MENU                 _UxGT("Printer Stats")
+  #define MSG_INFO_STATS_MENU                 _UxGT("Stats")
 #endif
 #ifndef MSG_INFO_BOARD_MENU
   #define MSG_INFO_BOARD_MENU                 _UxGT("Board Info")

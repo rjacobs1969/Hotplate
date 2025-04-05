@@ -756,7 +756,7 @@ void lcd_reset_status() {
     msg = paused;
   #if ENABLED(SDSUPPORT)
     else if (card.sdprinting)
-      return lcd_setstatus(card.longest_filename(), true);
+      return;
   #endif
   else if (print_job_timer.isRunning())
     msg = printing;
@@ -1138,12 +1138,13 @@ void lcd_quick_feedback(const bool clear_buttons) {
         MENU_ITEM_EDIT_CALLBACK(bool, MSG_CASE_LIGHT, (bool*)&case_light_on, update_case_light);
     #endif
 
-    if (planner.movesplanned() || IS_SD_PRINTING())
-      MENU_ITEM(submenu, MSG_TUNE, lcd_tune_menu);
-    else
-      MENU_ITEM(submenu, MSG_PREPARE, lcd_prepare_menu);
+   // if (planner.movesplanned() || IS_SD_PRINTING())
+   //   MENU_ITEM(submenu, MSG_TUNE, lcd_tune_menu);
+   // else
+    //  MENU_ITEM(submenu, MSG_PREPARE, lcd_prepare_menu);
 
-    MENU_ITEM(submenu, MSG_CONTROL, lcd_control_menu);
+    //MENU_ITEM(submenu, MSG_CONTROL, lcd_control_menu);
+    MENU_ITEM(submenu, MSG_TEMPERATURE, lcd_control_temperature_menu);
 
     #if ENABLED(SDSUPPORT)
       if (card.cardOK) {
@@ -2698,70 +2699,13 @@ void lcd_quick_feedback(const bool clear_buttons) {
     #if ENABLED(DELTA)
       if (all_axes_homed())
     #endif
-        MENU_ITEM(submenu, MSG_MOVE_AXIS, lcd_move_menu);
+    //    MENU_ITEM(submenu, MSG_MOVE_AXIS, lcd_move_menu);
 
-    //
-    // Auto Home
-    //
-    MENU_ITEM(gcode, MSG_AUTO_HOME, PSTR("G28"));
-    #if ENABLED(INDIVIDUAL_AXIS_HOMING_MENU)
-      MENU_ITEM(gcode, MSG_AUTO_HOME_X, PSTR("G28 X"));
-      MENU_ITEM(gcode, MSG_AUTO_HOME_Y, PSTR("G28 Y"));
-      MENU_ITEM(gcode, MSG_AUTO_HOME_Z, PSTR("G28 Z"));
-    #endif
 
-    //
-    // TMC Z Calibration
-    //
-    #if ENABLED(TMC_Z_CALIBRATION)
-      MENU_ITEM(gcode, MSG_TMC_Z_CALIBRATION, PSTR("G28\nM915"));
-    #endif
 
-    //
-    // Level Bed
-    //
-    #if ENABLED(AUTO_BED_LEVELING_UBL)
 
-      MENU_ITEM(submenu, MSG_UBL_LEVEL_BED, _lcd_ubl_level_bed);
 
-    #elif ENABLED(LCD_BED_LEVELING)
 
-      #if ENABLED(PROBE_MANUALLY)
-        if (!g29_in_progress)
-      #endif
-          MENU_ITEM(submenu, MSG_BED_LEVELING, lcd_bed_leveling);
-
-    #elif HAS_LEVELING && DISABLED(SLIM_LCD_MENUS)
-
-      #if DISABLED(PROBE_MANUALLY)
-        MENU_ITEM(gcode, MSG_LEVEL_BED, PSTR("G28\nG29"));
-      #endif
-      if (leveling_is_valid()) {
-        bool new_level_state = planner.leveling_active;
-        MENU_ITEM_EDIT_CALLBACK(bool, MSG_BED_LEVELING, &new_level_state, _lcd_toggle_bed_leveling);
-      }
-      #if ENABLED(ENABLE_LEVELING_FADE_HEIGHT)
-        MENU_MULTIPLIER_ITEM_EDIT_CALLBACK(float3, MSG_Z_FADE_HEIGHT, &new_z_fade_height, 0, 100, _lcd_set_z_fade_height);
-      #endif
-
-    #endif
-
-    #if ENABLED(LEVEL_BED_CORNERS) && DISABLED(LCD_BED_LEVELING)
-      if (all_axes_homed())
-        MENU_ITEM(function, MSG_LEVEL_CORNERS, _lcd_level_bed_corners);
-    #endif
-
-    #if HAS_M206_COMMAND && DISABLED(SLIM_LCD_MENUS)
-      //
-      // Set Home Offsets
-      //
-      MENU_ITEM(function, MSG_SET_HOME_OFFSETS, lcd_set_home_offsets);
-    #endif
-
-    //
-    // Disable Steppers
-    //
-    MENU_ITEM(gcode, MSG_DISABLE_STEPPERS, PSTR("M84"));
 
     //
     // Change filament
@@ -2794,13 +2738,13 @@ void lcd_quick_feedback(const bool clear_buttons) {
       //
       // Preheat for Material 1 and 2
       //
-      #if TEMP_SENSOR_1 != 0 || TEMP_SENSOR_2 != 0 || TEMP_SENSOR_3 != 0 || TEMP_SENSOR_4 != 0 || HAS_HEATED_BED
-        MENU_ITEM(submenu, MSG_PREHEAT_1, lcd_preheat_m1_menu);
-        MENU_ITEM(submenu, MSG_PREHEAT_2, lcd_preheat_m2_menu);
-      #else
-        MENU_ITEM(function, MSG_PREHEAT_1, lcd_preheat_m1_e0_only);
-        MENU_ITEM(function, MSG_PREHEAT_2, lcd_preheat_m2_e0_only);
-      #endif
+      //#if TEMP_SENSOR_1 != 0 || TEMP_SENSOR_2 != 0 || TEMP_SENSOR_3 != 0 || TEMP_SENSOR_4 != 0 || HAS_HEATED_BED
+      //  MENU_ITEM(submenu, MSG_PREHEAT_1, lcd_preheat_m1_menu);
+      //  MENU_ITEM(submenu, MSG_PREHEAT_2, lcd_preheat_m2_menu);
+      //#else
+      //  MENU_ITEM(function, MSG_PREHEAT_1, lcd_preheat_m1_e0_only);
+      //  MENU_ITEM(function, MSG_PREHEAT_2, lcd_preheat_m2_e0_only);
+      //#endif
 
     #endif // HAS_TEMP_HOTEND
 
@@ -3365,10 +3309,10 @@ void lcd_quick_feedback(const bool clear_buttons) {
     START_MENU();
     MENU_BACK(MSG_MAIN);
     MENU_ITEM(submenu, MSG_TEMPERATURE, lcd_control_temperature_menu);
-    MENU_ITEM(submenu, MSG_MOTION, lcd_control_motion_menu);
+    //MENU_ITEM(submenu, MSG_MOTION, lcd_control_motion_menu);
 
     #if DISABLED(NO_VOLUMETRICS) || ENABLED(ADVANCED_PAUSE_FEATURE)
-      MENU_ITEM(submenu, MSG_FILAMENT, lcd_control_filament_menu);
+    //  MENU_ITEM(submenu, MSG_FILAMENT, lcd_control_filament_menu);
     #elif ENABLED(LIN_ADVANCE)
       MENU_ITEM_EDIT(float52, MSG_ADVANCE_K, &planner.extruder_advance_K, 0, 999);
     #endif
@@ -3395,7 +3339,7 @@ void lcd_quick_feedback(const bool clear_buttons) {
       MENU_ITEM(function, MSG_LOAD_EEPROM, lcd_load_settings);
     #endif
 
-    MENU_ITEM(function, MSG_RESTORE_FAILSAFE, lcd_factory_settings);
+   // MENU_ITEM(function, MSG_RESTORE_FAILSAFE, lcd_factory_settings);
 
     #if ENABLED(EEPROM_SETTINGS) && DISABLED(SLIM_LCD_MENUS)
       MENU_ITEM(submenu, MSG_INIT_EEPROM, lcd_init_eeprom_confirm);
@@ -3551,12 +3495,12 @@ void lcd_quick_feedback(const bool clear_buttons) {
     //
     // Autotemp, Min, Max, Fact
     //
-    #if ENABLED(AUTOTEMP) && HAS_TEMP_HOTEND
-      MENU_ITEM_EDIT(bool, MSG_AUTOTEMP, &planner.autotemp_enabled);
-      MENU_ITEM_EDIT(float3, MSG_MIN, &planner.autotemp_min, 0, float(HEATER_0_MAXTEMP) - 15);
-      MENU_ITEM_EDIT(float3, MSG_MAX, &planner.autotemp_max, 0, float(HEATER_0_MAXTEMP) - 15);
-      MENU_ITEM_EDIT(float52, MSG_FACTOR, &planner.autotemp_factor, 0, 10);
-    #endif
+    //#if ENABLED(AUTOTEMP) && HAS_TEMP_HOTEND
+    //  MENU_ITEM_EDIT(bool, MSG_AUTOTEMP, &planner.autotemp_enabled);
+    //  MENU_ITEM_EDIT(float3, MSG_MIN, &planner.autotemp_min, 0, float(HEATER_0_MAXTEMP) - 15);
+    //  MENU_ITEM_EDIT(float3, MSG_MAX, &planner.autotemp_max, 0, float(HEATER_0_MAXTEMP) - 15);
+   //   MENU_ITEM_EDIT(float52, MSG_FACTOR, &planner.autotemp_factor, 0, 10);
+    //#endif
 
     //
     // PID-P, PID-I, PID-D, PID-C, PID Autotune

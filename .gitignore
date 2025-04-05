@@ -147,3 +147,4 @@ CMakeListsPrivate.txt
 
 #CLion
 cmake-build-*
+buildroot/share/PlatformIO/scripts/__pycache__/pioutil.cpython-311.pyc
